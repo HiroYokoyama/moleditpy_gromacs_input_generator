@@ -133,7 +133,7 @@ def guess_bonds(atoms: Sequence[Atom], tolerance: float = 0.45) -> list[tuple[in
                 cutoff = bond_cutoff(atoms[i].element, atoms[j].element, tolerance)
                 if np.sum((coords[i] - coords[j]) ** 2) <= cutoff * cutoff:
                     bonds.append((i, j))
-    return bonds
+    return sorted(bonds)
 
 
 def find_fragments(model: SystemModel) -> list[Fragment]:

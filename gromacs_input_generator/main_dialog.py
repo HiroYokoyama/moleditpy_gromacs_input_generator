@@ -546,12 +546,12 @@ class GromacsInputDialog(QDialog):
     def _fill_presets(self):
         self.preset_combo.clear()
         for name in BUILTIN_PRESETS:
-            self.preset_combo.addItem(name, ("builtin", name))
+            self.preset_combo.addItem(name, f"builtin:{name}")
         for name in sorted(load_presets()):
-            self.preset_combo.addItem(f"{name} (saved)", ("user", name))
+            self.preset_combo.addItem(f"{name} (saved)", f"user:{name}")
 
     def apply_preset(self):
-        kind, name = self.preset_combo.currentData() or ("builtin", "Default")
+        kind, _, name = (self.preset_combo.currentData() or "builtin:Default").partition(":")
         if kind == "builtin":
             update = copy.deepcopy(BUILTIN_PRESETS.get(name, {}))
             base = default_settings()
@@ -579,10 +579,10 @@ class GromacsInputDialog(QDialog):
             QMessageBox.warning(self, "Save preset", f"Could not write {SETTINGS_FILE}: {exc}")
             return
         self._fill_presets()
-        self.preset_combo.setCurrentIndex(self.preset_combo.findData(("user", name)))
+        self.preset_combo.setCurrentIndex(self.preset_combo.findData(f"user:{name}"))
 
     def delete_preset(self):
-        kind, name = self.preset_combo.currentData() or ("builtin", "")
+        kind, _, name = (self.preset_combo.currentData() or "builtin:").partition(":")
         if kind != "user":
             QMessageBox.information(self, "Delete preset", "Built-in presets cannot be deleted.")
             return

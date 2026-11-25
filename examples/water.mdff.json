@@ -1,0 +1,79 @@
+{
+ "format": "moleditpy-mdff",
+ "version": 1,
+ "source": "hand-written example: TIP3P water only",
+ "combination_rule": 2,
+ "fudge_lj": 0.5,
+ "fudge_qq": 0.8333,
+ "molecule_types": [
+  {
+   "name": "SOL",
+   "atoms": [
+    {
+     "name": "OW",
+     "element": "O",
+     "type": "OW",
+     "charge": -0.834,
+     "mass": 15.99943,
+     "sigma": 0.3150752406575124,
+     "epsilon": 0.635968
+    },
+    {
+     "name": "HW1",
+     "element": "H",
+     "type": "HW",
+     "charge": 0.417,
+     "mass": 1.007947,
+     "sigma": 0.0,
+     "epsilon": 0.0
+    },
+    {
+     "name": "HW2",
+     "element": "H",
+     "type": "HW",
+     "charge": 0.417,
+     "mass": 1.007947,
+     "sigma": 0.0,
+     "epsilon": 0.0
+    }
+   ],
+   "bonds": [
+    {
+     "i": 0,
+     "j": 1,
+     "r0": 0.09572,
+     "k": 462750.4
+    },
+    {
+     "i": 0,
+     "j": 2,
+     "r0": 0.09572,
+     "k": 462750.4
+    }
+   ],
+   "angles": [
+    {
+     "i": 1,
+     "j": 0,
+     "k_atom": 2,
+     "theta0": 104.52,
+     "k": 836.8
+    }
+   ],
+   "torsions": [],
+   "exclusions_nrexcl": 2,
+   "settles": {
+    "i": 0,
+    "doh": 0.09572,
+    "dhh": 0.15139
+   }
+  }
+ ],
+ "system": [
+  {
+   "type": "SOL",
+   "count": 2,
+   "atom_offset": 0
+  }
+ ]
+}

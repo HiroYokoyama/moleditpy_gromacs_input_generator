@@ -14,8 +14,8 @@ writer uses it for the .gro and the index file.
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
 
 from . import ff_tables
 from .elements import atomic_number
@@ -27,16 +27,16 @@ from .system_model import SystemModel, water_order
 class MolType:
     name: str
     source: str  # "mdff", "water", "ion", "skeleton"
-    atoms: List[dict]  # name, type, charge, mass, resnr, resname, element
+    atoms: list[dict]  # name, type, charge, mass, resnr, resname, element
     nrexcl: int = 3
-    bonds: List[Tuple[int, int, float, float]] = field(default_factory=list)
-    angles: List[Tuple[int, int, int, float, float]] = field(default_factory=list)
-    dihedrals: List[Tuple[int, int, int, int, int, float, float, int]] = field(default_factory=list)
-    constraints: List[Tuple[int, int, float]] = field(default_factory=list)
-    settles: Optional[Tuple[int, float, float]] = None
-    flexible_water: Optional[dict] = None
-    connectivity: List[Tuple[int, int]] = field(default_factory=list)  # skeleton only
-    notes: List[str] = field(default_factory=list)
+    bonds: list[tuple[int, int, float, float]] = field(default_factory=list)
+    angles: list[tuple[int, int, int, float, float]] = field(default_factory=list)
+    dihedrals: list[tuple[int, int, int, int, int, float, float, int]] = field(default_factory=list)
+    constraints: list[tuple[int, int, float]] = field(default_factory=list)
+    settles: tuple[int, float, float] | None = None
+    flexible_water: dict | None = None
+    connectivity: list[tuple[int, int]] = field(default_factory=list)  # skeleton only
+    notes: list[str] = field(default_factory=list)
 
     @property
     def size(self) -> int:
@@ -56,23 +56,23 @@ class Block:
     """One molecule instance: its type and host atom indices in topology order."""
 
     moltype: str
-    atoms: List[int]
+    atoms: list[int]
 
 
 @dataclass
 class Topology:
-    moltypes: Dict[str, MolType]
-    blocks: List[Block]
-    atomtypes: Dict[str, dict]
+    moltypes: dict[str, MolType]
+    blocks: list[Block]
+    atomtypes: dict[str, dict]
     combination_rule: int = 2
     fudge_lj: float = 0.5
     fudge_qq: float = 0.8333
     gen_pairs: bool = True
-    warnings: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     source_note: str = ""
 
     @property
-    def order(self) -> List[int]:
+    def order(self) -> list[int]:
         return [i for block in self.blocks for i in block.atoms]
 
     @property
@@ -80,9 +80,9 @@ class Topology:
         order = self.order
         return order != sorted(order)
 
-    def molecules(self) -> List[Tuple[str, int]]:
+    def molecules(self) -> list[tuple[str, int]]:
         """[ molecules ] rows: consecutive copies collapsed."""
-        rows: List[List] = []
+        rows: list[list] = []
         for block in self.blocks:
             if rows and rows[-1][0] == block.moltype:
                 rows[-1][1] += 1
@@ -125,7 +125,7 @@ def _residue_fields(model: SystemModel, indices: Sequence[int], default_resname:
     if not model.has_residue_info:
         return [1] * len(indices), [default_resname[:5]] * len(indices)
     numbers, names = [], []
-    mapping: Dict[Tuple[int, str], int] = {}
+    mapping: dict[tuple[int, str], int] = {}
     for i in indices:
         atom = model.atoms[i]
         key = (atom.resnum, atom.resname)
@@ -136,9 +136,9 @@ def _residue_fields(model: SystemModel, indices: Sequence[int], default_resname:
     return numbers, names
 
 
-def _atom_names(model: SystemModel, indices: Sequence[int]) -> List[str]:
+def _atom_names(model: SystemModel, indices: Sequence[int]) -> list[str]:
     names = []
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for i in indices:
         atom = model.atoms[i]
         if atom.name:
@@ -149,8 +149,8 @@ def _atom_names(model: SystemModel, indices: Sequence[int]) -> List[str]:
     return names
 
 
-def _add_atomtype(atomtypes: Dict[str, dict], name: str, element: str, mass: float,
-                  sigma: float, epsilon: float, warnings: List[str]) -> str:
+def _add_atomtype(atomtypes: dict[str, dict], name: str, element: str, mass: float,
+                  sigma: float, epsilon: float, warnings: list[str]) -> str:
     """Register an atom type; rename on a parameter clash."""
     entry = {"element": element, "mass": mass, "sigma": sigma, "epsilon": epsilon}
     current = atomtypes.get(name)
@@ -234,7 +234,7 @@ def _water_moltype(model_name: str, atomtypes, warnings) -> MolType:
     return mt
 
 
-def _ion_moltype(element: str, water_model: str, atomtypes, warnings) -> Optional[MolType]:
+def _ion_moltype(element: str, water_model: str, atomtypes, warnings) -> MolType | None:
     params = ff_tables.ion_parameters(element, water_model)
     if params is None:
         return None
@@ -266,12 +266,12 @@ def _skeleton_moltype(name: str, model: SystemModel, indices: Sequence[int]) -> 
     return mt
 
 
-def build_topology(model: SystemModel, mdff_doc: Optional[dict] = None,
+def build_topology(model: SystemModel, mdff_doc: dict | None = None,
                    water_model: str = "TIP3P") -> Topology:
-    warnings: List[str] = []
-    atomtypes: Dict[str, dict] = {}
-    moltypes: Dict[str, MolType] = {}
-    blocks: List[Block] = []
+    warnings: list[str] = []
+    atomtypes: dict[str, dict] = {}
+    moltypes: dict[str, MolType] = {}
+    blocks: list[Block] = []
     natoms = len(model.atoms)
     covered = [False] * natoms
     rule, fudge_lj, fudge_qq = 2, 0.5, 0.8333
@@ -293,7 +293,7 @@ def build_topology(model: SystemModel, mdff_doc: Optional[dict] = None,
             for i in range(start, end):
                 covered[i] = True
 
-    by_signature: Dict[Tuple, str] = {}
+    by_signature: dict[tuple, str] = {}
     skeleton_count = 0
     for fragment in model.fragments:
         todo = [i for i in fragment.atoms if not covered[i]]
@@ -367,15 +367,15 @@ def build_topology(model: SystemModel, mdff_doc: Optional[dict] = None,
 # --------------------------------------------------------------------------
 
 
-def _lj_columns(sigma: float, epsilon: float, rule: int) -> Tuple[float, float]:
+def _lj_columns(sigma: float, epsilon: float, rule: int) -> tuple[float, float]:
     if rule == 1:
         return 4.0 * epsilon * sigma ** 6, 4.0 * epsilon * sigma ** 12
     return sigma, epsilon
 
 
-def pairs_14(n: int, edges: Sequence[Tuple[int, int]]) -> List[Tuple[int, int]]:
+def pairs_14(n: int, edges: Sequence[tuple[int, int]]) -> list[tuple[int, int]]:
     """Atom pairs exactly three bonds apart (and not closer)."""
-    neighbours: Dict[int, set] = {i: set() for i in range(n)}
+    neighbours: dict[int, set] = {i: set() for i in range(n)}
     for i, j in edges:
         neighbours[i].add(j)
         neighbours[j].add(i)
@@ -483,8 +483,8 @@ def write_top(topo: Topology, title: str = "MoleditPy system", header: str = "")
                   "; parameters (see the TODO_* .itp files). grompp will fail until",
                   "; they are replaced, e.g. with Force Field Builder output.", ""]
     lines += ["[ defaults ]", "; nbfunc  comb-rule  gen-pairs  fudgeLJ  fudgeQQ",
-              f"  1       {topo.combination_rule}          {'yes' if topo.gen_pairs else 'no'}"
-              f"        {topo.fudge_lj:g}      {topo.fudge_qq:g}", "", "[ atomtypes ]"]
+              (f"  1       {topo.combination_rule}          {'yes' if topo.gen_pairs else 'no'}"
+               f"        {topo.fudge_lj:g}      {topo.fudge_qq:g}"), "", "[ atomtypes ]"]
     if topo.combination_rule == 1:
         lines.append("; name        at.num   mass       charge  ptype  c6              c12")
     else:

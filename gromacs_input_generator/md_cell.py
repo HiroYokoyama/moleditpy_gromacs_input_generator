@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import math
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -70,7 +70,7 @@ def cell_to_json(lattice, origin=(0.0, 0.0, 0.0), pbc=(True, True, True)) -> str
     )
 
 
-def read_cell_property(mol) -> Optional[dict]:
+def read_cell_property(mol) -> dict | None:
     """The molecule's ``moleditpy_cell`` as a parsed dict, or None if absent."""
     if mol is None:
         return None
@@ -80,7 +80,7 @@ def read_cell_property(mol) -> Optional[dict]:
         return parse_cell_json(mol.GetProp(CELL_PROPERTY))
     except CellError:
         raise
-    except Exception:  # pragma: no cover - RDKit-like guard
+    except (AttributeError, RuntimeError):  # pragma: no cover - RDKit-like guard
         return None
 
 

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
-
 STAGES = ("em", "nvt", "npt", "md")
 STAGE_TITLES = {
     "em": "Energy minimisation",
@@ -63,7 +61,7 @@ def _fmt(value) -> str:
     return str(value)
 
 
-def _rows(rows: List[Tuple[str, object, str]]) -> List[str]:
+def _rows(rows: list[tuple[str, object, str]]) -> list[str]:
     out = []
     for key, value, comment in rows:
         if key.startswith(";"):
@@ -76,13 +74,13 @@ def _rows(rows: List[Tuple[str, object, str]]) -> List[str]:
     return out
 
 
-def _tc_groups(settings: dict, groups_present: Dict[str, bool]) -> Tuple[str, int]:
+def _tc_groups(settings: dict, groups_present: dict[str, bool]) -> tuple[str, int]:
     if settings.get("tc_grps_split") and groups_present.get("Water_and_ions") and groups_present.get("non-Water"):
         return "Water_and_ions non-Water", 2
     return "System", 1
 
 
-def _nonbonded(settings: dict) -> List[Tuple[str, object, str]]:
+def _nonbonded(settings: dict) -> list[tuple[str, object, str]]:
     rows = [
         ("; Neighbour searching and non-bonded interactions", None, ""),
         ("cutoff-scheme", "Verlet", ""),
@@ -102,7 +100,7 @@ def _nonbonded(settings: dict) -> List[Tuple[str, object, str]]:
 
 
 def stage_mdp(stage: str, settings: dict, groups_present=None, header: str = "",
-              first_dynamics: bool = None) -> str:
+              first_dynamics: bool | None = None) -> str:
     """Text of one .mdp file.
 
     ``first_dynamics`` marks the first MD stage of the chain, which generates
@@ -112,7 +110,7 @@ def stage_mdp(stage: str, settings: dict, groups_present=None, header: str = "",
         first_dynamics = stage == "nvt"
     groups_present = groups_present or {}
     s = settings
-    rows: List[Tuple[str, object, str]] = []
+    rows: list[tuple[str, object, str]] = []
     title = STAGE_TITLES[stage]
     lines = [f"; {title}"]
     if header:
@@ -210,12 +208,12 @@ def _compress(s) -> str:
     return value
 
 
-def enabled_stages(settings: dict) -> List[str]:
+def enabled_stages(settings: dict) -> list[str]:
     flags = settings.get("stages") or {}
     return [stage for stage in STAGES if flags.get(stage, True)]
 
 
-def check_settings(settings: dict, min_box_width_nm: float = 0.0) -> List[str]:
+def check_settings(settings: dict, min_box_width_nm: float = 0.0) -> list[str]:
     """Problems grompp would complain about, found early."""
     problems = []
     cutoff = max(float(settings["rcoulomb"]), float(settings["rvdw"]))

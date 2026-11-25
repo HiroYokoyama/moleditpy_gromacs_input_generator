@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -53,11 +52,11 @@ class Box:
 
 @dataclass
 class Bundle:
-    files: Dict[str, str]
-    warnings: List[str] = field(default_factory=list)
-    errors: List[str] = field(default_factory=list)
-    topology: Optional[Topology] = None
-    box: Optional[np.ndarray] = None  # GROMACS-setting lattice, Angstrom
+    files: dict[str, str]
+    warnings: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    topology: Topology | None = None
+    box: np.ndarray | None = None  # GROMACS-setting lattice, Angstrom
 
     @property
     def ok(self) -> bool:
@@ -131,9 +130,9 @@ def write_gro(topo: Topology, coords_angstrom, box_angstrom, title: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-def index_groups(topo: Topology) -> Dict[str, List[int]]:
+def index_groups(topo: Topology) -> dict[str, list[int]]:
     """1-based serials in topology order: System, Protein, Water_and_ions, Other, ..."""
-    groups: Dict[str, List[int]] = {"System": [], "Protein": [], "Water": [], "Ion": [],
+    groups: dict[str, list[int]] = {"System": [], "Protein": [], "Water": [], "Ion": [],
                                     "Water_and_ions": [], "Other": [], "non-Water": []}
     serial = 0
     for block in topo.blocks:
@@ -162,7 +161,7 @@ def index_groups(topo: Topology) -> Dict[str, List[int]]:
     return {name: members for name, members in groups.items() if members}
 
 
-def write_ndx(groups: Dict[str, List[int]]) -> str:
+def write_ndx(groups: dict[str, list[int]]) -> str:
     lines = []
     for name, members in groups.items():
         lines.append(f"[ {name} ]")
@@ -188,8 +187,8 @@ def write_posre(mt) -> str:
 def build_bundle(model, settings: dict, mdff_doc=None, cell_prop=None, cif_lattice=None,
                  header: str = "") -> Bundle:
     settings = merge_settings(default_settings(), settings or {})
-    files: Dict[str, str] = {}
-    errors: List[str] = []
+    files: dict[str, str] = {}
+    errors: list[str] = []
     try:
         box = resolve_box(settings, model.coords, cell_prop, cif_lattice)
         coords, gmx_box = place_in_box(model.coords, box)
@@ -236,13 +235,12 @@ def build_bundle(model, settings: dict, mdff_doc=None, cell_prop=None, cif_latti
         files["run.bat"] = run_scripts.run_bat(stages, conf, "topol.top", index_name, posres)
 
     width_nm = md_cell.minimum_box_width(gmx_box) / 10.0
-    if any(s != "em" for s in stages) or "em" in stages:
-        for problem in mdp.check_settings(mdp_settings, width_nm):
-            warnings.append(problem)
+    if stages:
+        warnings.extend(mdp.check_settings(mdp_settings, width_nm))
     return Bundle(files=files, warnings=warnings, errors=errors, topology=topo, box=gmx_box)
 
 
-def save_bundle(bundle: Bundle, directory: str) -> List[str]:
+def save_bundle(bundle: Bundle, directory: str) -> list[str]:
     import os
 
     os.makedirs(directory, exist_ok=True)

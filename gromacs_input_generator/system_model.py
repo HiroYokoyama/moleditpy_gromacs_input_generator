@@ -6,8 +6,8 @@ it can be tested without RDKit.  :func:`from_rdkit` is the only adapter.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -24,7 +24,7 @@ from .ff_tables import (
 @dataclass
 class Atom:
     element: str
-    xyz: Tuple[float, float, float]  # Angstrom
+    xyz: tuple[float, float, float]  # Angstrom
     name: str = ""
     resname: str = ""
     resnum: int = 0
@@ -39,9 +39,9 @@ class Atom:
 class Fragment:
     """One connected molecule, with its atoms in host order."""
 
-    atoms: List[int]
+    atoms: list[int]
     kind: str = "other"  # "water", "ion", "protein", "other"
-    signature: Tuple = ()
+    signature: tuple = ()
 
     @property
     def size(self) -> int:
@@ -50,9 +50,9 @@ class Fragment:
 
 @dataclass
 class SystemModel:
-    atoms: List[Atom]
-    bonds: List[Tuple[int, int]] = field(default_factory=list)
-    fragments: List[Fragment] = field(default_factory=list)
+    atoms: list[Atom]
+    bonds: list[tuple[int, int]] = field(default_factory=list)
+    fragments: list[Fragment] = field(default_factory=list)
     has_residue_info: bool = False
 
     @property
@@ -60,15 +60,15 @@ class SystemModel:
         return np.array([a.xyz for a in self.atoms], dtype=float).reshape(-1, 3)
 
     @property
-    def elements(self) -> List[str]:
+    def elements(self) -> list[str]:
         return [a.element for a in self.atoms]
 
     @property
     def net_charge(self) -> int:
         return sum(a.formal_charge for a in self.atoms)
 
-    def neighbours(self) -> Dict[int, List[int]]:
-        table: Dict[int, List[int]] = {i: [] for i in range(len(self.atoms))}
+    def neighbours(self) -> dict[int, list[int]]:
+        table: dict[int, list[int]] = {i: [] for i in range(len(self.atoms))}
         for i, j in self.bonds:
             table[i].append(j)
             table[j].append(i)
@@ -78,11 +78,11 @@ class SystemModel:
 def build_system(
     elements: Sequence[str],
     coords,
-    bonds: Sequence[Tuple[int, int]] = (),
-    names: Optional[Sequence[str]] = None,
-    resnames: Optional[Sequence[str]] = None,
-    resnums: Optional[Sequence[int]] = None,
-    formal_charges: Optional[Sequence[int]] = None,
+    bonds: Sequence[tuple[int, int]] = (),
+    names: Sequence[str] | None = None,
+    resnames: Sequence[str] | None = None,
+    resnums: Sequence[int] | None = None,
+    formal_charges: Sequence[int] | None = None,
     infer_bonds: bool = False,
 ) -> SystemModel:
     """Make a :class:`SystemModel` and detect its fragments."""
@@ -113,14 +113,14 @@ def build_system(
     return model
 
 
-def guess_bonds(atoms: Sequence[Atom], tolerance: float = 0.45) -> List[Tuple[int, int]]:
+def guess_bonds(atoms: Sequence[Atom], tolerance: float = 0.45) -> list[tuple[int, int]]:
     """Distance-based bonds (cell list), used only when the molecule has none."""
     coords = np.array([a.xyz for a in atoms], dtype=float)
     if len(coords) < 2:
         return []
     cell = 3.0
     keys = np.floor(coords / cell).astype(int)
-    grid: Dict[Tuple[int, int, int], List[int]] = {}
+    grid: dict[tuple[int, int, int], list[int]] = {}
     for idx, key in enumerate(map(tuple, keys)):
         grid.setdefault(key, []).append(idx)
     bonds = []
@@ -136,7 +136,7 @@ def guess_bonds(atoms: Sequence[Atom], tolerance: float = 0.45) -> List[Tuple[in
     return bonds
 
 
-def find_fragments(model: SystemModel) -> List[Fragment]:
+def find_fragments(model: SystemModel) -> list[Fragment]:
     """Connected components, ordered by their first atom; classify each."""
     n = len(model.atoms)
     parent = list(range(n))
@@ -151,7 +151,7 @@ def find_fragments(model: SystemModel) -> List[Fragment]:
         ri, rj = find(i), find(j)
         if ri != rj:
             parent[max(ri, rj)] = min(ri, rj)
-    groups: Dict[int, List[int]] = {}
+    groups: dict[int, list[int]] = {}
     for i in range(n):
         groups.setdefault(find(i), []).append(i)
     fragments = [Fragment(atoms=sorted(members)) for members in groups.values()]
@@ -184,7 +184,7 @@ def classify(model: SystemModel, fragment: Fragment) -> str:
     return "other"
 
 
-def signature(model: SystemModel, fragment: Fragment) -> Tuple:
+def signature(model: SystemModel, fragment: Fragment) -> tuple:
     """Identity of a fragment for counting copies: elements in order, local
     bond graph, residue names and formal charges.  Two fragments with the same
     signature can share one [ moleculetype ]."""
@@ -203,7 +203,7 @@ def signature(model: SystemModel, fragment: Fragment) -> Tuple:
     return (elements, bonds, charges, resnames)
 
 
-def water_order(model: SystemModel, fragment: Fragment) -> List[int]:
+def water_order(model: SystemModel, fragment: Fragment) -> list[int]:
     """Host indices of a water fragment in O, H, H order (SETTLE needs it)."""
     oxygen = [i for i in fragment.atoms if model.atoms[i].element == "O"]
     hydrogens = [i for i in fragment.atoms if model.atoms[i].element == "H"]

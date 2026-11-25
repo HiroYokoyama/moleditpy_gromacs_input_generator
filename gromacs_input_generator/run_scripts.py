@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from typing import List, Tuple
-
 _PREVIOUS = {"nvt": "em", "npt": "nvt", "md": "npt"}
 
 
-def stage_commands(stages: List[str], conf: str, top: str, index: str = "",
-                   posres: bool = False) -> List[Tuple[str, str]]:
+def stage_commands(stages: list[str], conf: str, top: str, index: str = "",
+                   posres: bool = False) -> list[tuple[str, str]]:
     """(stage, grompp args) for each stage; mdrun is always ``-deffnm stage``."""
     commands = []
     previous = None

@@ -8,7 +8,7 @@ order: ``{"type": name, "count": n, "atom_offset": k}``.
 from __future__ import annotations
 
 import json
-from typing import Dict, List, Optional, Tuple
+import math
 
 FORMAT_NAME = "moleditpy-mdff"
 SUPPORTED_VERSION = 1
@@ -23,7 +23,7 @@ def _num(value, what: str) -> float:
         result = float(value)
     except (TypeError, ValueError) as exc:
         raise MdffError(f"{what} is not a number: {value!r}") from exc
-    if result != result or result in (float("inf"), float("-inf")):
+    if not math.isfinite(result):
         raise MdffError(f"{what} is not finite")
     return result
 
@@ -38,7 +38,7 @@ def _idx(value, natoms: int, what: str) -> int:
     return index
 
 
-def _settles(raw, natoms: int, name: str) -> List[dict]:
+def _settles(raw, natoms: int, name: str) -> list[dict]:
     """Accept {i, doh, dhh}, {oxygen, doh, dhh} or a list of those."""
     if raw in (None, [], {}):
         return []
@@ -163,7 +163,7 @@ def parse_mdff(data) -> dict:
     if not isinstance(types_raw, list) or not types_raw:
         raise MdffError("'molecule_types' must be a non-empty list")
     types = [_molecule_type(t) for t in types_raw]
-    by_name: Dict[str, dict] = {}
+    by_name: dict[str, dict] = {}
     for mt in types:
         if mt["name"] in by_name:
             raise MdffError(f"Molecule type {mt['name']!r} is defined twice")
@@ -211,10 +211,10 @@ def load_mdff(path: str) -> dict:
     return parse_mdff(data)
 
 
-def coverage(doc: dict, natoms: int) -> Tuple[List[Tuple[int, int, str]], List[str]]:
+def coverage(doc: dict, natoms: int) -> tuple[list[tuple[int, int, str]], list[str]]:
     """Atom spans the document covers: [(start, end_exclusive, type)], warnings."""
     spans = []
-    warnings: List[str] = []
+    warnings: list[str] = []
     for entry in doc["system"]:
         size = len(doc["types_by_name"][entry["type"]]["atoms"])
         for copy in range(entry["count"]):
@@ -228,7 +228,7 @@ def coverage(doc: dict, natoms: int) -> Tuple[List[Tuple[int, int, str]], List[s
     return spans, warnings
 
 
-def element_mismatches(doc: dict, spans, elements) -> List[str]:
+def element_mismatches(doc: dict, spans, elements) -> list[str]:
     """Compare mdff atom elements with the host atoms they are mapped onto."""
     problems = []
     for start, _end, type_name in spans:
@@ -246,7 +246,7 @@ def element_mismatches(doc: dict, spans, elements) -> List[str]:
     return problems
 
 
-def find_type_for(doc: Optional[dict], name: str) -> Optional[dict]:
+def find_type_for(doc: dict | None, name: str) -> dict | None:
     if not doc:
         return None
     return doc["types_by_name"].get(name)

@@ -6,12 +6,11 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import Optional, Tuple
 
 GMX_NAMES = ("gmx", "gmx_mpi", "gmx_d", "gmx_mpi_d")
 
 
-def find_gmx() -> Optional[str]:
+def find_gmx() -> str | None:
     for name in GMX_NAMES:
         path = shutil.which(name)
         if path:
@@ -27,8 +26,8 @@ def grompp_command(gmx: str, stage: str, conf: str, index: str = "") -> list:
     return command
 
 
-def run_grompp(files: dict, conf: str, stage: str = "em", gmx: Optional[str] = None,
-               timeout: float = 120.0) -> Tuple[bool, str]:
+def run_grompp(files: dict, conf: str, stage: str = "em", gmx: str | None = None,
+               timeout: float = 120.0) -> tuple[bool, str]:
     """Write the files to a temporary directory and run grompp there.
 
     Blocking; call it from a worker thread.  Returns (success, combined output).

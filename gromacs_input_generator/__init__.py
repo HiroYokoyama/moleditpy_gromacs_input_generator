@@ -10,7 +10,7 @@ import os
 _log = logging.getLogger(__name__)
 
 PLUGIN_NAME = "GROMACS Input Generator"
-PLUGIN_VERSION = "0.1.0"
+PLUGIN_VERSION = "0.1.1"
 PLUGIN_AUTHOR = "HiroYokoyama"
 PLUGIN_DESCRIPTION = (
     "Write GROMACS inputs (.gro with triclinic boxes, .top/.itp from a moleditpy-mdff "

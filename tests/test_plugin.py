@@ -85,7 +85,7 @@ def test_required_metadata():
     for name in ("PLUGIN_NAME", "PLUGIN_VERSION", "PLUGIN_AUTHOR", "PLUGIN_DESCRIPTION",
                  "PLUGIN_SUPPORTED_MOLEDITPY_VERSION", "PLUGIN_LICENSE", "PLUGIN_CATEGORY"):
         assert getattr(plugin, name, "").strip(), f"{name} must be set"
-    assert plugin.PLUGIN_VERSION == "0.1.0"
+    assert plugin.PLUGIN_VERSION == "0.1.1"
     assert plugin.PLUGIN_AUTHOR == "HiroYokoyama"
     assert plugin.PLUGIN_LICENSE == "LGPL-3.0-or-later"
     assert plugin.PLUGIN_CATEGORY == "Input Generator"

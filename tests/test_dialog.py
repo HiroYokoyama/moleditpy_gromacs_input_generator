@@ -150,3 +150,48 @@ def test_extra_lines_per_stage(dialog):
     assert dialog.extra_edit.toPlainText() == ""
     dialog.update_preview()
     assert dialog.bundle.files["md.mdp"].rstrip().endswith("nstxout = 0")
+
+
+def _assert_tabs_scroll_and_ignore_the_wheel(dlg):
+    """Long settings tabs scroll (the dialog fits a laptop screen) and an unfocused
+    field does not change when the wheel scrolls over it."""
+    from PySide6.QtCore import QPoint, QPointF, Qt
+    from PySide6.QtGui import QWheelEvent
+    from PySide6.QtWidgets import (
+        QAbstractSpinBox,
+        QApplication,
+        QDoubleSpinBox,
+        QScrollArea,
+        QSpinBox,
+    )
+
+    assert dlg.minimumSizeHint().height() < 600
+    pages = [a.widget() for a in dlg.findChildren(QScrollArea) if a.widget() is not None]
+    assert len(pages) >= 3
+    spins = [
+        s
+        for page in pages
+        for s in page.findChildren(QAbstractSpinBox)
+        if isinstance(s, (QSpinBox, QDoubleSpinBox))
+        and s.isEnabled()
+        and s.value() < s.maximum()
+    ]
+    spin = spins[0]
+    assert spin.focusPolicy() == Qt.FocusPolicy.StrongFocus
+    before = spin.value()
+    event = QWheelEvent(
+        QPointF(5, 5),
+        QPointF(5, 5),
+        QPoint(0, 0),
+        QPoint(0, 120),
+        Qt.MouseButton.NoButton,
+        Qt.KeyboardModifier.NoModifier,
+        Qt.ScrollPhase.NoScrollPhase,
+        False,
+    )
+    QApplication.sendEvent(spin, event)
+    assert spin.value() == before
+
+
+def test_settings_tabs_scroll_and_ignore_the_wheel(dialog):
+    _assert_tabs_scroll_and_ignore_the_wheel(dialog)

@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QFormLayout,
+    QFrame,
     QGroupBox,
     QHBoxLayout,
     QInputDialog,
@@ -25,6 +26,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
+    QScrollArea,
     QSpinBox,
     QSplitter,
     QTableWidget,
@@ -37,6 +39,7 @@ from PySide6.QtWidgets import (
 from . import PLUGIN_NAME, PLUGIN_VERSION, SETTINGS_FILE, gmx_check, md_cell, mdp
 from .mdff import MdffError, load_mdff
 from .system_model import from_rdkit
+from .wheel_guard import install_wheel_guard
 from .writer import build_bundle, default_settings, merge_settings, save_bundle
 
 PREVIEW_LINE_LIMIT = 3000
@@ -115,12 +118,39 @@ def _combo(items):
     return combo
 
 
+
+def _scrolled(page):
+    """A settings page that scrolls, so a long tab never makes the dialog taller than the
+    screen and pushes its buttons out of reach."""
+    area = QScrollArea()
+    area.setWidgetResizable(True)
+    area.setFrameShape(QFrame.Shape.NoFrame)
+    area.setWidget(page)
+    # Scrolling over a field must not change it: fields take the wheel once clicked.
+    install_wheel_guard(page)
+    return area
+
+
+def fit_to_screen(dialog, fraction=0.9):
+    """Shrink the dialog's first size to the screen it opens on (small laptop screens)."""
+    parent = dialog.parentWidget()
+    screen = parent.screen() if parent is not None else dialog.screen()
+    if screen is None:
+        return
+    area = screen.availableGeometry()
+    dialog.resize(
+        min(dialog.width(), int(area.width() * fraction)),
+        min(dialog.height(), int(area.height() * fraction)),
+    )
+
+
 class GromacsInputDialog(QDialog):
     def __init__(self, parent=None, persistent_settings=None, get_molecule=None,
                  mark_modified=None, get_cif_viewer=None, context=None):
         super().__init__(parent)
         self.setWindowTitle(f"{PLUGIN_NAME} {PLUGIN_VERSION}")
         self.resize(1180, 760)
+        fit_to_screen(self)
         self.persistent_settings = persistent_settings if persistent_settings is not None else {}
         self.get_molecule = get_molecule or (lambda: None)
         self.mark_modified = mark_modified
@@ -146,11 +176,11 @@ class GromacsInputDialog(QDialog):
         root.addLayout(self._build_preset_row())
         splitter = QSplitter()
         self.tabs = QTabWidget()
-        self.tabs.addTab(self._build_system_tab(), "System")
-        self.tabs.addTab(self._build_ff_tab(), "Force field")
-        self.tabs.addTab(self._build_box_tab(), "Box")
-        self.tabs.addTab(self._build_md_tab(), "MD stages")
-        self.tabs.addTab(self._build_output_tab(), "Output")
+        self.tabs.addTab(_scrolled(self._build_system_tab()), "System")
+        self.tabs.addTab(_scrolled(self._build_ff_tab()), "Force field")
+        self.tabs.addTab(_scrolled(self._build_box_tab()), "Box")
+        self.tabs.addTab(_scrolled(self._build_md_tab()), "MD stages")
+        self.tabs.addTab(_scrolled(self._build_output_tab()), "Output")
         splitter.addWidget(self.tabs)
         splitter.addWidget(self._build_preview_panel())
         splitter.setSizes([520, 660])

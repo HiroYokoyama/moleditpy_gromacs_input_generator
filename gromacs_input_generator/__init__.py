@@ -10,7 +10,7 @@ import os
 _log = logging.getLogger(__name__)
 
 PLUGIN_NAME = "GROMACS Input Generator"
-PLUGIN_VERSION = "0.1.1"
+PLUGIN_VERSION = "0.1.2"
 PLUGIN_AUTHOR = "HiroYokoyama"
 PLUGIN_DESCRIPTION = (
     "Write GROMACS inputs (.gro with triclinic boxes, .top/.itp from a moleditpy-mdff "
@@ -18,7 +18,7 @@ PLUGIN_DESCRIPTION = (
     "groups and a grompp/mdrun run script) from the current molecule or MD system."
 )
 PLUGIN_CATEGORY = "Input Generator"
-PLUGIN_TAGS = ["Generator"]
+PLUGIN_TAGS = ["Generator", "MD"]
 PLUGIN_DEPENDENCIES = []
 PLUGIN_OPTIONAL_DEPENDENCIES = []
 PLUGIN_SUPPORTED_MOLEDITPY_VERSION = ">=5.0.0, <6.0.0"

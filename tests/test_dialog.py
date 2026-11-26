@@ -6,6 +6,7 @@ import pytest
 
 pytest.importorskip("PySide6")
 Chem = pytest.importorskip("rdkit.Chem")
+from conftest import flush_qt
 from rdkit.Chem import AllChem
 
 import gromacs_input_generator as plugin
@@ -44,8 +45,7 @@ def dialog(qapp, presets_file):
     dlg.mol = mol
     yield dlg
     plugin.remembered_cell.clear()
-    dlg.close()
-    dlg.deleteLater()
+    flush_qt(qapp)
 
 
 def _files(dlg):
